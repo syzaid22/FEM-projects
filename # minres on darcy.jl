@@ -64,7 +64,7 @@ F(q)=∫(f*q)dΩ
 G(v)=∫(g⋅v)dΩ - ∫((v⋅nb)*p)dΓ  # edit 2: added boundary term
 
 A((ϵu,ϵp,u,p),(tu,tp,v,q))=c(ϵu,v)+a(u,v)+b(p,v) + d(ϵp,q)+b(q,u)+ a(tu,ϵu)+b(tu,ϵp) + b(ϵu,tp)
-H((tu,tp,v,q)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs 'actual' solutions
+H((tu,tp,v,q)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
 
 op = AffineFEOperator(A,H,tests,trials)
 xh = solve(op)
