@@ -50,20 +50,20 @@ nb = get_normal_vector(btri)
 # using Kinvhalf = Kinv^0.5
 Kinvhalf = TensorValue(0.5,0.0,0.0,0.2)
 
-a(u,v) = ∫((Kinvhalf⋅u)⋅(Kinvhalf⋅v))dΩ
+a(w,v) = ∫((Kinvhalf⋅w)⋅(Kinvhalf⋅v))dΩ
 
-b(p,v)= ∫(-p⋅(∇⋅(v)))dΩ
+b(ρ,v)= ∫(-ρ⋅(∇⋅(v)))dΩ
 
 # our inner product on H(div)
-c(u,v) = a(u,v) + ∫((∇⋅(u))*(∇⋅(v)))dΩ
+c(w,v) = a(w,v) + ∫((∇⋅(w))*(∇⋅(v)))dΩ
 
 # L2 inner product
-d(u,v) = ∫( u⋅v )dΩ
+d(w,v) = ∫( w⋅v )dΩ
 
 F(q)=∫(f*q)dΩ
 G(v)=∫(g⋅v)dΩ - ∫((v⋅nb)*p)dΓ  # edit 2: added boundary term
 
-A((ϵu,ϵp,u,p),(tu,tp,v,q))=c(ϵu,v)+a(u,v)+b(p,v) + d(ϵp,q)+b(q,u)+ a(tu,ϵu)+b(tu,ϵp) + b(ϵu,tp)
+A((ϵu,ϵp,w,ρ),(tu,tp,v,q))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)+b(q,w)+ a(tu,ϵu)+b(tu,ϵp) + b(ϵu,tp)
 H((tu,tp,v,q)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
 
 op = AffineFEOperator(A,H,tests,trials)
@@ -126,7 +126,7 @@ end
 
 # first experiment!
 	u_1(x) = VectorValue(sin(x[1]),cos(x[2]))
-  p_1(x) = x[1]*x[2]
+  p_1(x) = x[1]
 	ncells_1 = [ 2^i for i in 2:5 ]
 	erru_1, errepsu_1, errp_1, errepsp_1,  Ns_1 = h_refinement(u_1,p_1,ncells_1)
 
