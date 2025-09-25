@@ -7,11 +7,11 @@ function minres_darcy(u,p,N)
 
 Kinv = TensorValue(0.25,0.0,0.0,0.04)
 
-f(x) = -(∇⋅u)(x)
-g(x) = Kinv⋅u(x) + ∇(p)(x)
+f(x) = 2*(π^2)*sin(π*x[1])*sin(π*x[2])
+g(x) = u(x) + ∇(p)(x)
 
 
-domain = (0.0,1.0,0.0,1.0)
+domain = (0,1,0,1)
 partition = (N,N)
 model = CartesianDiscreteModel(domain, partition)
 
@@ -19,13 +19,13 @@ order2=2
 order1=1
 
 V_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order2),
-            conformity=:HDiv, dirichlet_tags=[5,6])
+            conformity=:HDiv,dirichlet_tags=[5,6])
             
 V_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order2),
             conformity=:L2)    
 
 U_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order1),
-            conformity=:HDiv, dirichlet_tags=[5,6])
+            conformity=:HDiv,dirichlet_tags=[5,6])
 
 U_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order1),
             conformity=:L2)
@@ -48,7 +48,7 @@ dΓ = Measure(btri,degree)
 nb = get_normal_vector(btri)
 
 # using Kinvhalf = Kinv^0.5
-Kinvhalf = TensorValue(0.5,0.0,0.0,0.2)
+Kinvhalf = TensorValue(1.0,0.0,0.0,1.0)
 
 a(w,v) = ∫((Kinvhalf⋅w)⋅(Kinvhalf⋅v))dΩ
 
@@ -61,23 +61,28 @@ c(w,v) = a(w,v) + ∫((∇⋅(w))*(∇⋅(v)))dΩ
 d(w,v) = ∫( w⋅v )dΩ
 
 F(q)=∫(f*q)dΩ
-G(v)=∫(g⋅v)dΩ - ∫((v⋅nb)*p)dΓ  # edit 2: added boundary term
+G(v)= ∫(g⋅v)dΩ + ∫(-(v⋅nb)*p)dΓ  # edit 2: added boundary term #
 
-A((ϵu,ϵp,w,ρ),(tu,tp,v,q))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)+b(q,w)+ a(tu,ϵu)+b(tu,ϵp) + b(ϵu,tp)
-H((tu,tp,v,q)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
+A((ϵu,ϵp,w,ρ),(v,q,tu,tp))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)-b(q,w)+ a(tu,ϵu)+b(ϵp,tu) - b(tp,ϵu)
+H((v,q,tu,tp)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
 
-op = AffineFEOperator(A,H,tests,trials)
+op = AffineFEOperator(A,H,trials,tests)
 xh = solve(op)
 ϵuh,ϵph,uh,ph = xh
 
 eu = u - uh
 ep = p - ph
 
+
+
   erru = sqrt(sum(c(eu,eu)))
   errepsu = sqrt(sum(c(ϵuh,ϵuh)))
 
   errp = sqrt(sum(d(ep,ep)))
   errepsp = sqrt(sum(d(ϵph,ϵph)))
+
+
+writevtk(tri,"darcyresults",cellfields=["uh"=>uh,"ph"=>ph])
 
 return erru, errepsu, errp, errepsp
 
@@ -125,10 +130,15 @@ function convergence_plot(Narr,errors1,errors2)
 end
 
 # first experiment!
-	u_1(x) = VectorValue(sin(x[1]),cos(x[2]))
-  p_1(x) = x[1]
+	u_1(x) = -π*VectorValue(sin(π*x[2])*cos(π*x[1]),cos(π*x[2])*sin(π*x[1]))
+  p_1(x) = sin(π*x[1])*sin(π*x[2])
 	ncells_1 = [ 2^i for i in 2:5 ]
 	erru_1, errepsu_1, errp_1, errepsp_1,  Ns_1 = h_refinement(u_1,p_1,ncells_1)
 
   convergence_plot(Ns_1, erru_1, errepsu_1)
   convergence_plot(Ns_1, errp_1, errepsp_1)
+
+  convergence_plot(Ns_1, erru_1, errp_1)
+
+
+  writevtk(tri,"darcyresults",cellfields=["uh"=>uh,"ph"=>ph])
