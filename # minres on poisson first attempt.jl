@@ -36,14 +36,14 @@ b((ε,u),(v,z))= a(ε,v) + ∫(∇(v)⋅∇(u) + ∇(ε)⋅∇(z))dΩ
 
 l((v,z))=∫(f*v)dΩ
 
-op = AffineFEOperator(b,l,X,Y)
+op = AffineFEOperator(b,l,X,Y)   
 xh = solve(op)
 εh, uh = xh
 
 e = u - uh
 
   erru = sqrt(sum(a(e,e)))
-  erreps = sqrt(sum(a(εh,εh)))
+  erreps = sqrt(sum(a(εh,εh)))    
 
 
 
@@ -63,7 +63,7 @@ e2 = u - uh2
 
 
 
-nn = Gridap.FESpaces.num_free_dofs(X)
+nn = Gridap.FESpaces.num_free_dofs(X)  
 
 return erru, erreps, erru2, erreps2, nn
 
@@ -75,26 +75,29 @@ end #function
 
 function h_refinement(u,ncells)
 
-  erru_h = []
-  erreps_h = []
-  erru2_h = []
-  erreps2_h = []
-  Ns = Float64[]
+  size = length(ncells)
 
-    for N in ncells
+  erru_h = Array{Float64}(undef,size)
+  errepsu_h = Array{Float64}(undef,size)
+  
+  errp_h = Array{Float64}(undef,size)
+  errepsp_h = Array{Float64}(undef,size)
 
-      erru, erreps, erru2, erreps2, nn = minres_poisson(u,N)
-      push!(erru_h,erru)
-      push!(erreps_h,erreps)
+  N = Array{Int}(undef,size)
 
-      push!(erru2_h,erru2)
-      push!(erreps2_h,erreps2)
+    for i = 1:size
+      erru, errepsu, errp, errepsp, n = minres_poisson(u,ncells[i])
 
-      push!(Ns,nn)
+      erru_h[i] = erru
+      errepsu_h[i] = errepsu
 
+      errp_h[i] = errp
+      errepsp_h[i] = errepsp
+
+      N[i] = n
     end
 
-  return erru_h, erreps_h, erru2_h, erreps2_h, Ns
+  return erru_h, errepsu_h, errp_h, errepsp_h, N
 
 end
 
@@ -115,23 +118,23 @@ end
 # first experiment!
 	u_1(x) = (x[1]^2-x[1])*(x[2]^2-x[2])
 	ncells_1 = [ 2^i for i in 2:8 ]
-	erru_1, erreps_1, erru2_1, erreps2_1, Ns_1 = h_refinement(u_1,ncells_1)  
+	erru_1, erreps_1, erru2_1, erreps2_1, N_1 = h_refinement(u_1,ncells_1)  
   
-  convergence_plot(Ns_1, erru_1, erreps_1)
-  convergence_plot(Ns_1, erru2_1, erreps2_1)
+  convergence_plot(N_1, erru_1, erreps_1)
+  convergence_plot(N_1, erru2_1, erreps2_1)
 
 # experiment 2
 u_2(x) = sin(2*π*x[1]*x[2])
-erru_2, erreps_2, erru2_2, erreps2_2, Ns_2 = h_refinement(u_2,ncells_1)  
+erru_2, erreps_2, erru2_2, erreps2_2, N_2 = h_refinement(u_2,ncells_1)  
   
-  convergence_plot(Ns_2, erru_2, erreps_2)
-  convergence_plot(Ns_2, erru2_2, erreps2_2)
+  convergence_plot(N_2, erru_2, erreps_2)
+  convergence_plot(N_2, erru2_2, erreps2_2)
   
 # experiment 3
 u_3(x) = (x[1]^7-x[1])*(x[2]^5-x[2])
-erru_3, erreps_3, Ns_3 = h_refinement(u_3,ncells_1)  
+erru_3, erreps_3, erru2_3, erreps2_3, N_3 = h_refinement(u_3,ncells_1)  
   
-convergence_plot(Ns_3, erru_3, erreps_3)
+convergence_plot(N_3, erru_3, erreps_3)
 
 
 

@@ -7,8 +7,8 @@ function minres_darcy(u,p,N)
 
 Kinv = TensorValue(0.25,0.0,0.0,0.04)
 
-f(x) = 2*(π^2)*sin(π*x[1])*sin(π*x[2])
-g(x) = u(x) + ∇(p)(x)
+f(x) = -(∇⋅u)(x)
+g(x) = Kinv⋅u(x) + ∇(p)(x)
 
 
 domain = (0,1,0,1)
@@ -48,7 +48,7 @@ dΓ = Measure(btri,degree)
 nb = get_normal_vector(btri)
 
 # using Kinvhalf = Kinv^0.5
-Kinvhalf = TensorValue(1.0,0.0,0.0,1.0)
+Kinvhalf = TensorValue(0.5,0.0,0.0,0.2)
 
 a(w,v) = ∫((Kinvhalf⋅w)⋅(Kinvhalf⋅v))dΩ
 
@@ -63,7 +63,7 @@ d(w,v) = ∫( w⋅v )dΩ
 F(q)=∫(f*q)dΩ
 G(v)= ∫(g⋅v)dΩ + ∫(-(v⋅nb)*p)dΓ  # edit 2: added boundary term #
 
-A((ϵu,ϵp,w,ρ),(v,q,tu,tp))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)-b(q,w)+ a(tu,ϵu)+b(ϵp,tu) - b(tp,ϵu)
+A((ϵu,ϵp,w,ρ),(v,q,tu,tp))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)+b(q,w)+ a(tu,ϵu)+b(ϵp,tu) + b(tp,ϵu)
 H((v,q,tu,tp)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
 
 op = AffineFEOperator(A,H,trials,tests)
@@ -73,16 +73,11 @@ xh = solve(op)
 eu = u - uh
 ep = p - ph
 
-
-
   erru = sqrt(sum(c(eu,eu)))
   errepsu = sqrt(sum(c(ϵuh,ϵuh)))
 
   errp = sqrt(sum(d(ep,ep)))
   errepsp = sqrt(sum(d(ϵph,ϵph)))
-
-
-writevtk(tri,"darcyresults",cellfields=["uh"=>uh,"ph"=>ph])
 
 return erru, errepsu, errp, errepsp
 
@@ -94,28 +89,25 @@ end #function
 
 function h_refinement(u,p,ncells)
 
-  erru_h = Float64[]
-  errepsu_h = Float64[]
+  size = length(ncells)
+
+  erru_h = Array{Float64}(undef,size)
+  errepsu_h = Array{Float64}(undef,size)
   
-  errp_h = Float64[]
-  errepsp_h = Float64[]
+  errp_h = Array{Float64}(undef,size)
+  errepsp_h = Array{Float64}(undef,size)
 
-  Ns = Int[]
+    for i = 1:size
+      erru, errepsu, errp, errepsp = minres_darcy(u,p,ncells[i])
 
-    for N in ncells
+      erru_h[i] = erru
+      errepsu_h[i] = errepsu
 
-      erru, errepsu, errp, errepsp = minres_darcy(u,p,N)
-      push!(erru_h,erru)
-      push!(errepsu_h,errepsu)
-
-      push!(errp_h,errp)
-      push!(errepsp_h,errepsp)
-
-      push!(Ns,N)
-
+      errp_h[i] = errp
+      errepsp_h[i] = errepsp
     end
 
-  return erru_h, errepsu_h, errp_h, errepsp_h, Ns
+  return erru_h, errepsu_h, errp_h, errepsp_h
 
 end
 
@@ -133,12 +125,7 @@ end
 	u_1(x) = -π*VectorValue(sin(π*x[2])*cos(π*x[1]),cos(π*x[2])*sin(π*x[1]))
   p_1(x) = sin(π*x[1])*sin(π*x[2])
 	ncells_1 = [ 2^i for i in 2:5 ]
-	erru_1, errepsu_1, errp_1, errepsp_1,  Ns_1 = h_refinement(u_1,p_1,ncells_1)
+	erru_1, errepsu_1, errp_1, errepsp_1 = h_refinement(u_1,p_1,ncells_1)
 
-  convergence_plot(Ns_1, erru_1, errepsu_1)
-  convergence_plot(Ns_1, errp_1, errepsp_1)
-
-  convergence_plot(Ns_1, erru_1, errp_1)
-
-
-  writevtk(tri,"darcyresults",cellfields=["uh"=>uh,"ph"=>ph])
+  convergence_plot(ncells_1, erru_1, errepsu_1)
+  convergence_plot(ncells_1, errp_1, errepsp_1)
