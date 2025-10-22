@@ -61,7 +61,7 @@ c(w,v) = a(w,v) + ∫((∇⋅(w))*(∇⋅(v)))dΩ
 d(w,v) = ∫( w⋅v )dΩ
 
 F(q)=∫(f*q)dΩ
-G(v)= ∫(g⋅v)dΩ + ∫(-(v⋅nb)*p)dΓ  # edit 2: added boundary term #
+G(v)= ∫(g⋅v)dΩ + ∫(-(v⋅nb)*p)dΓ  # edit 2: added boundary term 
 
 A((ϵu,ϵp,w,ρ),(v,q,tu,tp))=c(ϵu,v)+a(w,v)+b(ρ,v) + d(ϵp,q)+b(q,w)+ a(tu,ϵu)+b(ϵp,tu) + b(tp,ϵu)
 H((v,q,tu,tp)) = F(q) + G(v)   # edit 3: corrected order of epsilons vs solutions in the smaller spaces
@@ -82,8 +82,6 @@ ep = p - ph
 return erru, errepsu, errp, errepsp
 
 end #function
-
-
 
 
 

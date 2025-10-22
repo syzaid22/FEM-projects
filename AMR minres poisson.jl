@@ -6,7 +6,6 @@ using DataStructures
 r(x) = ((x[1]-0.5)^2 + (x[2]-0.5)^2)^(1/2)
 u_exact(x) = 1.0 / (ϵ + r(x))
 
-
 # generating the L-shaped domain [0,1]²\[0.5,1]x[0.5,1]
 function LShapedModel(n)
   model = CartesianDiscreteModel((0,1,0,1),(n,n))
@@ -23,7 +22,6 @@ end
 
 function amr_step(model,u_exact;order)
 
-  "Create FE spaces with Dirichlet boundary conditions on all boundaries"
  orderV=2
  orderU=1
 
@@ -63,8 +61,8 @@ function amr_step(model,u_exact;order)
   εh, uh = xh  
   
   "Riesz representative of the residual as error estimator η"
-  l2_norm_dΩ(xh) = ∫(xh*xh)*dΩ
-  η = estimate(l2_norm_dΩ,εh) 
+  h1_norm_dΩ(v) = a(v,v)
+  η = estimate(h1_norm_dΩ,εh) 
 
   "Mark cells for refinement; those containing a fixed fraction (0.9) of the total error"
   m = DorflerMarking(0.9)
@@ -76,7 +74,7 @@ function amr_step(model,u_exact;order)
   fmodel = Adaptivity.get_model(amodel)
 
   "Compute the global error for convergence testing"
-  error = sum(l2_norm_dΩ(uh - u_exact))
+  error = sum(h1_norm_dΩ(uh - u_exact))
   return fmodel, uh, η, I, error
 end
 

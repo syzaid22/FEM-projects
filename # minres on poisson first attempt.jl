@@ -36,7 +36,7 @@ b((ε,u),(v,z))= a(ε,v) + ∫(∇(v)⋅∇(u) + ∇(ε)⋅∇(z))dΩ
 
 l((v,z))=∫(f*v)dΩ
 
-op = AffineFEOperator(b,l,X,Y)   
+op = AffineFEOperator(b,l,Y,X)   
 xh = solve(op)
 εh, uh = xh
 
@@ -52,7 +52,7 @@ c(u,v) = ∫(∇(u)⋅∇(v))dΩ
 
 d((ε,u),(v,z))= c(ε,v) + ∫(∇(v)⋅∇(u) + ∇(ε)⋅∇(z))dΩ
 
-op2 = AffineFEOperator(d,l,X,Y)
+op2 = AffineFEOperator(d,l,Y,X)
 xh2 = solve(op2)
 εh2, uh2 = xh2
 
