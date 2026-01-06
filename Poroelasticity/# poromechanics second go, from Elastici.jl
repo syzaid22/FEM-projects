@@ -31,8 +31,8 @@ module PoroelasticityMixedTensor_mixedBCTests
   σex(x) = (calC∘ε(uex))(x) - α*pex(x)*I
   γex(x) = 0.5*(∇(uex)(x) - transpose(∇(uex)(x)))
 
-  fex(x) = -(∇⋅σex)(x)
-  gex(x) = s_0*pex(x) + α*(∇⋅uex)(x) + (∇⋅zex)(x) #
+  fex(x) = -(∇⋅σex)(x)   
+  gex(x) = s_0*pex(x) + α*(∇⋅uex)(x) + (∇⋅zex)(x) 
 
   comp1=extract_component(1)
   comp2=extract_component(2)
@@ -65,8 +65,8 @@ module PoroelasticityMixedTensor_mixedBCTests
 
   Sh1 = TrialFESpace(Sh_,row1∘σex) # edit 1: boundary conditions 
   Sh2 = TrialFESpace(Sh_,row2∘σex)
-  Ph = TrialFESpace(Gh_,0.0)
-  Vh = TrialFESpace(Vh_,VectorValue(0.0,0.0))
+  Ph = TrialFESpace(Gh_)#,0.0)
+  Vh = TrialFESpace(Vh_)#,VectorValue(0.0,0.0))
   Gh = TrialFESpace(Gh_)
   Zh = TrialFESpace(Sh_,zex)
 
@@ -80,12 +80,12 @@ module PoroelasticityMixedTensor_mixedBCTests
 
   a((σ1,σ2,p),(τ1,τ2,q)) =  a1((σ1,σ2),(τ1,τ2)) + a2(p,(τ1,τ2)) + a2(q,(σ1,σ2)) +  a3(p,q) 
  
-  b1((τ1,τ2),(v,η)) = ∫((comp1∘v)*(∇⋅τ1)+(comp2∘v)*(∇⋅τ2) + η*(comp2∘τ1-comp1∘τ2))dΩ
+  b1((τ1,τ2),(v,η)) = ∫((comp1∘v)*(∇⋅τ1)+(comp2∘v)*(∇⋅τ2) + η*(comp2∘τ1-comp1∘τ2))dΩ # previous edit: added negative sign on η -- this had no effect; now reverted
   b2(q,w) = ∫( q*(∇⋅w) )dΩ 
 
   b((τ1,τ2,q),(v,η,w)) =  b1((τ1,τ2),(v,η)) + b2(q,w)
 
-  c(z,w) = ∫((Kinv⋅z)⋅w)dΩ
+  c(z,w) = ∫((Kinv⋅z)⋅w)dΩ # previous edit: took negative into the bilinear form and edited the lhs below to +c -- this had no effect; now reverted
 
   F(τ1,τ2,q) =  ∫((τ1⋅n_ΓD)*(comp1∘uex) + (τ2⋅n_ΓD)*(comp2∘uex))dΓD + ∫(gex*q)dΩ 
   G(v,w) = ∫(pex*(w⋅n_ΓD))dΓD - ∫(fex⋅v)dΩ 
