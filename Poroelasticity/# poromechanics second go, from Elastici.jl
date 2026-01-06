@@ -6,7 +6,7 @@ module PoroelasticityMixedTensor_mixedBCTests
   using Printf
   using LinearAlgebra
 
-  push!(LOAD_PATH, joinpath(@__DIR__, "Poroelasticity/src"))
+  push!(LOAD_PATH, joinpath(@__DIR__, "src"))
   using GridapMixedViscoelasticityReactionDiffusion
 
   # Material parameters
@@ -63,12 +63,12 @@ module PoroelasticityMixedTensor_mixedBCTests
   Gh_ = TestFESpace(model,reffe_γ,conformity=:L2)
   Vh_ = TestFESpace(model,reffe_u,conformity=:L2)
 
-  Sh1 = TrialFESpace(Sh_,VectorValue(0.0,0.0))
-  Sh2 = TrialFESpace(Sh_,VectorValue(0.0,0.0))
-  Ph = TrialFESpace(Gh_,pex)
-  Vh = TrialFESpace(Vh_,uex)
+  Sh1 = TrialFESpace(Sh_,row1∘σex) # edit 1: boundary conditions 
+  Sh2 = TrialFESpace(Sh_,row2∘σex)
+  Ph = TrialFESpace(Gh_,0.0)
+  Vh = TrialFESpace(Vh_,VectorValue(0.0,0.0))
   Gh = TrialFESpace(Gh_)
-  Zh = TrialFESpace(Sh_,VectorValue(0.0,0.0))
+  Zh = TrialFESpace(Sh_,zex)
 
   Y = MultiFieldFESpace([Sh_,Sh_,Gh_,Vh_,Gh_,Sh_])
   X = MultiFieldFESpace([Sh1,Sh2,Ph,Vh,Gh,Zh])
