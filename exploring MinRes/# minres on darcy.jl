@@ -2,7 +2,9 @@
 
 using Gridap
 using Plots
+using DataFrames, CSV
 
+# i.e. u is vector-valued, p is scalar-valued
 function minres_darcy(u,p,N)
 
 Kinv = TensorValue(0.25,0.0,0.0,0.04)
@@ -47,10 +49,7 @@ dΓ = Measure(btri,degree)
 
 nb = get_normal_vector(btri)
 
-# using Kinvhalf = Kinv^0.5
-Kinvhalf = TensorValue(0.5,0.0,0.0,0.2)
-
-a(w,v) = ∫((Kinvhalf⋅w)⋅(Kinvhalf⋅v))dΩ
+a(w,v) = ∫((Kinv⋅w)⋅v)dΩ
 
 b(ρ,v)= ∫(-ρ⋅(∇⋅(v)))dΩ
 
@@ -115,7 +114,7 @@ function convergence_plot(Narr,errors1,errors2)
   plot!(xaxis=:log, yaxis=:log,
   shape=:auto,
   label=["errors"],
-  xlabel="N",ylabel="error norm")
+  xlabel="h",ylabel="error norm")
   plot!(Narr,errors2,label=["ϵh"],shape=:auto)
 end
 
@@ -123,7 +122,30 @@ end
 	u_1(x) = -π*VectorValue(sin(π*x[2])*cos(π*x[1]),cos(π*x[2])*sin(π*x[1]))
   p_1(x) = sin(π*x[1])*sin(π*x[2])
 	ncells_1 = [ 2^i for i in 2:5 ]
+  h_1 = 1 ./ ncells_1
 	erru_1, errepsu_1, errp_1, errepsp_1 = h_refinement(u_1,p_1,ncells_1)
 
-  convergence_plot(ncells_1, erru_1, errepsu_1)
-  convergence_plot(ncells_1, errp_1, errepsp_1)
+  convergence_plot(h_1, erru_1, errepsu_1)
+  convergence_plot(h_1, errp_1, errepsp_1)
+
+# 2nd experiment
+	u_2(x) = VectorValue(-cos(x[2])*x[1],x[2]*sin(x[1]))
+  p_2(x) = cos(x[1])*x[2]^2
+	ncells_2 = [ 2^i for i in 2:5 ]
+  h_2 = 1 ./ ncells_2
+	erru_2, errepsu_2, errp_2, errepsp_2 = h_refinement(u_2,p_2,ncells_2)
+
+  convergence_plot(h_2, erru_2, errepsu_2)
+  convergence_plot(h_2, errp_2, errepsp_2)
+
+  df1 = DataFrame(size = h_2, error = erru_2)
+  CSV.write("erru1.dat", df1)
+  df2 = DataFrame(size = h_2, error = errepsu_2)
+  CSV.write("erru2.dat", df2)
+
+  df3 = DataFrame(size = h_2, error = errp_2)
+  CSV.write("errp.dat", df3)
+  df4 = DataFrame(size = h_2, error = errepsp_2)
+  CSV.write("errepsp.dat", df4)
+
+ 

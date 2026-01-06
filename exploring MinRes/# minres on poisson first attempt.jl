@@ -70,9 +70,6 @@ return erru, erreps, erru2, erreps2, nn
 end #function
 
 
-
-
-
 function h_refinement(u,ncells)
 
   size = length(ncells)
