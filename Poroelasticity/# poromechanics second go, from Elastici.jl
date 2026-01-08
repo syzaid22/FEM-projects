@@ -28,7 +28,7 @@ module PoroelasticityMixedTensor_mixedBCTests
                      # -0.1*sin(π*x[1])*cos(π*x[2])+0.15/λ*x[2]^2)
   pex(x) = cos(x[1])*x[2]^2
   zex(x) = -(K⋅∇(pex)(x))
-  σex(x) = (calC∘ε(uex))(x) - α*pex(x)*I
+  σex(x) = (calC∘ε(uex))(x) - α*pex(x)*(one∘ε(uex))(x)
   γex(x) = 0.5*(∇(uex)(x) - transpose(∇(uex)(x)))
 
   fex(x) = -(∇⋅σex)(x)   
