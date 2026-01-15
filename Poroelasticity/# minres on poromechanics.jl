@@ -13,14 +13,13 @@ module PoroelasticityMinRes
     const ν = 0.479
     const λ = (E*ν)/((1+ν)*(1-2*ν))
     const μ = E/(2*(1+ν))
-    K = TensorValue(2e-11, 0.0, 0.0, 2e-11) # this will be variable later...
-    Kinv = TensorValue(5e10, 0.0, 0.0, 5e10) # and so will this.
+    K_component = 2e-11
+    K = TensorValue(K_component, 0.0, 0.0, K_component) # this will be variable later...
+    Kinv = TensorValue(1/K_component, 0.0, 0.0, 1/K_component) # and so will this.
     # K = TensorValue(1.0,0.0,0.0,1.0)
     # Kinv = TensorValue(1.0,0.0,0.0,1.0)
     const s_0 = 1e-3
     const α = 1
-    # const λ = 1
-    # const μ = 1
 
     const d = 2 # dimension of spatial domain
 
@@ -68,6 +67,7 @@ module PoroelasticityMinRes
   Sh_ = TestFESpace(model,reffe_σ_,dirichlet_tags="Gamma_sig",conformity=:HDiv)
   Gh_ = TestFESpace(model,reffe_γ_,conformity=:L2)
   Vh_ = TestFESpace(model,reffe_u_,conformity=:L2)
+
   Sh_1 = TestFESpace(model,reffe_σ_1,dirichlet_tags="Gamma_sig",conformity=:HDiv)
   Gh_1 = TestFESpace(model,reffe_γ_1,conformity=:L2)
   Vh_1 = TestFESpace(model,reffe_u_1,conformity=:L2)
@@ -79,12 +79,12 @@ module PoroelasticityMinRes
   Gh = TrialFESpace(Gh_)
   Zh = TrialFESpace(Sh_,zex)
 
-  rSh1 = TrialFESpace(Sh_)#,VectorValue(0.0,0.0))
-  rSh2 = TrialFESpace(Sh_)#,VectorValue(0.0,0.0))
-  rPh = TrialFESpace(Gh_)
-  rVh = TrialFESpace(Vh_)
-  rGh = TrialFESpace(Gh_)
-  rZh = TrialFESpace(Sh_)#,VectorValue(0.0,0.0))
+  rSh1 = TrialFESpace(Sh_1)#,VectorValue(0.0,0.0))
+  rSh2 = TrialFESpace(Sh_1)#,VectorValue(0.0,0.0))
+  rPh = TrialFESpace(Gh_1)
+  rVh = TrialFESpace(Vh_1)
+  rGh = TrialFESpace(Gh_1)
+  rZh = TrialFESpace(Sh_1)#,VectorValue(0.0,0.0))
   # what would the boundary conditions be on the test spaces; zero or none?
 
   Y = MultiFieldFESpace([Sh_1,Sh_1,Gh_1,Vh_1,Gh_1,Sh_1,Sh_,Sh_,Gh_,Vh_,Gh_,Sh_])
@@ -105,15 +105,14 @@ module PoroelasticityMinRes
   c(z,w) = ∫((Kinv⋅z)⋅w)dΩ 
 
   d1(p,q) = ∫(p⋅q)dΩ # L2 inner product
-  d2(z,w) = ∫(z⋅w + (∇⋅z)(∇⋅w))dΩ # Hdiv inner product
+  d2(z,w) = ∫(z⋅w + (∇⋅z)*(∇⋅w))dΩ # Hdiv inner product
+  d3(z,w) = ∫((Kinv⋅z)⋅w + (∇⋅z)*(∇⋅w))dΩ # weighted Hdiv inner product
 
   F(τ1,τ2,q) =  ∫((τ1⋅n_ΓD)*(comp1∘uex) + (τ2⋅n_ΓD)*(comp2∘uex))dΓD + ∫(gex*q)dΩ 
   G(v,w) = ∫(pex*(w⋅n_ΓD))dΓD - ∫(fex⋅v)dΩ 
 
-  lhs((εσ1,εσ2,εp,εu,εγ,εz,σ1,σ2,p,u,γ,z),(τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  a((σ1,σ2,p),(τ1,τ2,q)) + b((τ1,τ2,q),(u,γ,z)) + b((σ1,σ2,p),(v,η,w)) - c(z,w) 
-                                                                                + a((φσ1,φσ2,φp),(εσ1,εσ2,εp)) + b((φσ1,φσ2,φp),(εu,εγ,εz)) + b((εσ1,εσ2,εp),(φu,φγ,φz)) - c(φz,φw)
-                                                                                + d2(εσ1,τ1) + d2(εσ2,τ2) + d1(εp,q) + d1(εu,v) + d1(εγ,η) + d2(εz,w)
-  rhs((τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  F(τ1,τ2,q) + G(v,w)
+  lhs((εσ1,εσ2,εp,εu,εγ,εz,σ1,σ2,p,u,γ,z),(τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  a((σ1,σ2,p),(τ1,τ2,q)) + b((τ1,τ2,q),(u,γ,z)) + b((σ1,σ2,p),(v,η,w)) - c(z,w) + a((φσ1,φσ2,φp),(εσ1,εσ2,εp)) + b((φσ1,φσ2,φp),(εu,εγ,εz)) + b((εσ1,εσ2,εp),(φu,φγ,φz)) - c(φz,εz) + d2(εσ1,τ1) + d2(εσ2,τ2) + ∫(K_component*εp*q)dΩ + ∫(εu⋅v)dΩ + ∫(εγ*η)dΩ + d3(εz,w)
+  rhs((τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  F(τ1,τ2,q) + G(v,w)                                                        
 
   op = AffineFEOperator(lhs,rhs,X,Y)
   εσh1, εσh2, εph, εuh, εγh, εzh, σh1, σh2, ph, uh, γh, zh  = solve(op)
@@ -136,17 +135,17 @@ module PoroelasticityMinRes
 
   error_σ = sqrt(sum(∫(eσ1h⋅eσ1h+eσ2h⋅eσ2h)dΩ +
                      ∫((∇⋅eσ1h)*(∇⋅eσ1h)+(∇⋅eσ2h)*(∇⋅eσ2h))dΩ))
-  error_p = sqrt(sum(∫(eph*eph)dΩ))
+  error_p = sqrt(sum(∫(K_component*eph*eph)dΩ))
   error_u = sqrt(sum(∫(euh⋅euh)dΩ))
   error_γ = sqrt(sum(∫(eγh*eγh)dΩ))
-  error_z = sqrt(sum(∫(ezh⋅ezh)dΩ + ∫((∇⋅ezh)*(∇⋅ezh))dΩ))
+  error_z = sqrt(sum(d3(ezh,ezh)))
 
   size_εσh = sqrt(sum(∫(εσh1⋅εσh1+εσh2⋅εσh2)dΩ +
                      ∫((∇⋅εσh1)*(∇⋅εσh1)+(∇⋅εσh2)*(∇⋅εσh2))dΩ))
-  size_εph = sqrt(sum(∫(εph*εph)dΩ))
+  size_εph = sqrt(sum(∫(K_component*εph*εph)dΩ))
   size_εuh = sqrt(sum(∫(εuh⋅εuh)dΩ))
   size_εγh = sqrt(sum(∫(εγh*εγh)dΩ))
-  size_εzh = sqrt(sum(∫(εzh⋅εzh)dΩ + ∫((∇⋅εzh)*(∇⋅εzh))dΩ))
+  size_εzh = sqrt(sum(d3(εzh,εzh)))
 
   size_εσh,size_εph,size_εuh,size_εγh,size_εzh, error_σ,error_p,error_u,error_γ,error_z, Gridap.FESpaces.num_free_dofs(X)
   end
@@ -267,7 +266,7 @@ module PoroelasticityMinRes
 
     println("========================================================================")
   end
-  convergence_test(;nkmax=4,k=0,generate_output=false)
+  convergence_test(;nkmax=5,k=0,generate_output=false)
 end
 
 
