@@ -1,13 +1,11 @@
-# minres on darcy
-
 using Gridap
 using Plots
 using DataFrames, CSV
 
 # i.e. u is vector-valued, p is scalar-valued
-function minres_darcy(u,p,N)
+function minres_darcy(u,p,N,K_component)
 
-Kinv = TensorValue(0.25,0.0,0.0,0.04)
+Kinv = TensorValue(1/K_component,0.0,0.0,1/K_component)
 
 f(x) = -(∇⋅u)(x)
 g(x) = Kinv⋅u(x) + ∇(p)(x)
@@ -17,19 +15,18 @@ domain = (0,1,0,1)
 partition = (N,N)
 model = CartesianDiscreteModel(domain, partition)
 
-order2=2
-order1=1
+order = 1
 
-V_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order2),
+V_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order+1),
             conformity=:HDiv,dirichlet_tags=[5,6])
             
-V_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order2),
+V_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order+1),
             conformity=:L2)    
 
-U_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order1),
+U_rt = TestFESpace(model,ReferenceFE(raviart_thomas,Float64,order),
             conformity=:HDiv,dirichlet_tags=[5,6])
 
-U_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order1),
+U_L2 = TestFESpace(model,ReferenceFE(lagrangian,Float64,order),
             conformity=:L2)
 
 Vt_rt = TrialFESpace(V_rt,VectorValue(0.0,0.0))
@@ -44,7 +41,7 @@ tri = Triangulation(model)
 degree = 8
 dΩ = Measure(tri,degree)
 
-btri = BoundaryTriangulation(model,tags=[7,8])
+btri = BoundaryTriangulation(model,tags=[1,2,3,4,7,8])
 dΓ = Measure(btri,degree)
 
 nb = get_normal_vector(btri)
@@ -53,11 +50,11 @@ a(w,v) = ∫((Kinv⋅w)⋅v)dΩ
 
 b(ρ,v)= ∫(-ρ⋅(∇⋅(v)))dΩ
 
-# our inner product on H(div)
-c(w,v) = a(w,v) + ∫((∇⋅(w))*(∇⋅(v)))dΩ
-
 # L2 inner product
 d(w,v) = ∫( w⋅v )dΩ
+
+# our inner product on H(div)
+c(w,v) = a(w,v) + ∫((∇⋅(w))*(∇⋅(v)))dΩ
 
 F(q)=∫(f*q)dΩ
 G(v)= ∫(g⋅v)dΩ + ∫(-(v⋅nb)*p)dΓ  # edit 2: added boundary term 
@@ -84,7 +81,7 @@ end #function
 
 
 
-function h_refinement(u,p,ncells)
+function h_refinement(u,p,ncells,K_component)
 
   size = length(ncells)
 
@@ -95,7 +92,7 @@ function h_refinement(u,p,ncells)
   errepsp_h = Array{Float64}(undef,size)
 
     for i = 1:size
-      erru, errepsu, errp, errepsp = minres_darcy(u,p,ncells[i])
+      erru, errepsu, errp, errepsp = minres_darcy(u,p,ncells[i],K_component)
 
       erru_h[i] = erru
       errepsu_h[i] = errepsu
@@ -118,34 +115,33 @@ function convergence_plot(Narr,errors1,errors2)
   plot!(Narr,errors2,label=["ϵh"],shape=:auto)
 end
 
-# first experiment!
-	u_1(x) = -π*VectorValue(sin(π*x[2])*cos(π*x[1]),cos(π*x[2])*sin(π*x[1]))
-  p_1(x) = sin(π*x[1])*sin(π*x[2])
-	ncells_1 = [ 2^i for i in 2:5 ]
-  h_1 = 1 ./ ncells_1
-	erru_1, errepsu_1, errp_1, errepsp_1 = h_refinement(u_1,p_1,ncells_1)
+# # first experiment!
+# 	u_1(x) = -π*VectorValue(sin(π*x[2])*cos(π*x[1]),cos(π*x[2])*sin(π*x[1]))
+#   p_1(x) = sin(π*x[1])*sin(π*x[2])
+# 	ncells_1 = [ 2^i for i in 2:5 ]
+#   h_1 = 1 ./ ncells_1
+# 	erru_1, errepsu_1, errp_1, errepsp_1 = h_refinement(u_1,p_1,ncells_1)
 
-  convergence_plot(h_1, erru_1, errepsu_1)
-  convergence_plot(h_1, errp_1, errepsp_1)
+#   convergence_plot(h_1, erru_1, errepsu_1)
+#   convergence_plot(h_1, errp_1, errepsp_1)
 
 # 2nd experiment
 	u_2(x) = VectorValue(-cos(x[2])*x[1],x[2]*sin(x[1]))
   p_2(x) = cos(x[1])*x[2]^2
 	ncells_2 = [ 2^i for i in 2:5 ]
   h_2 = 1 ./ ncells_2
-	erru_2, errepsu_2, errp_2, errepsp_2 = h_refinement(u_2,p_2,ncells_2)
+	erru_2, errepsu_2, errp_2, errepsp_2 = h_refinement(u_2,p_2,ncells_2,1e-6)
 
   convergence_plot(h_2, erru_2, errepsu_2)
   convergence_plot(h_2, errp_2, errepsp_2)
 
-  df1 = DataFrame(size = h_2, error = erru_2)
-  CSV.write("erru1.dat", df1)
-  df2 = DataFrame(size = h_2, error = errepsu_2)
-  CSV.write("erru2.dat", df2)
+  # df1 = DataFrame(size = h_2, error = erru_2)
+  # CSV.write("erru1.dat", df1)
+  # df2 = DataFrame(size = h_2, error = errepsu_2)
+  # CSV.write("erru2.dat", df2)
 
-  df3 = DataFrame(size = h_2, error = errp_2)
-  CSV.write("errp.dat", df3)
-  df4 = DataFrame(size = h_2, error = errepsp_2)
-  CSV.write("errepsp.dat", df4)
-
+  # df3 = DataFrame(size = h_2, error = errp_2)
+  # CSV.write("errp.dat", df3)
+  # df4 = DataFrame(size = h_2, error = errepsp_2)
+  # CSV.write("errepsp.dat", df4)
  

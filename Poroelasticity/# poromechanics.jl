@@ -10,17 +10,26 @@ module PoroelasticityMixedTensor_mixedBCTests
   using GridapMixedViscoelasticityReactionDiffusion
 
   # Material parameters
-    # const E = 1.0e2
-    # const ν = 0.49
+    # const E = 16000
+    # const ν = 0.479
     # const λ = (E*ν)/((1+ν)*(1-2*ν))
     # const μ = E/(2*(1+ν))
-    K = TensorValue(1.0, 0.0, 0.0, 1.0) # this will be variable later...
-    Kinv = TensorValue(1.0, 0.0, 0.0, 1.0) # and so will this.
-    const s_0 = 1
+    const λ = 1e9
+    const μ = 1e3
+
+    K_component = 1e-3
+    K = TensorValue(K_component, 0.0, 0.0, K_component) # this will be variable later...
+    Kinv = TensorValue(1/K_component, 0.0, 0.0, 1/K_component) # and so will this.
+
+    const s_0 = 0
     const α = 1
-    const λ = 1
-    const μ = 1
-    const d = 2
+
+    print("λ   = $(λ)\n")
+    print("μ   = $(μ)\n")
+    print("s_0 = $(s_0)\n")
+    print("K   = $(K_component)\n")
+
+    const d = 2 # dimension of spatial domain
 
   calC(τ) = 2*μ*τ + λ*tr(τ)*one(τ)
 
@@ -190,7 +199,7 @@ module PoroelasticityMixedTensor_mixedBCTests
 
     println("========================================================================")
   end
-  convergence_test(;nkmax=6,k=0,generate_output=true)
+  convergence_test(;nkmax=5,k=0,generate_output=false)
 end
 
 
