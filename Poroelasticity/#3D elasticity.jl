@@ -1,6 +1,6 @@
 #3D elasticity
 # code is only pseudo-working; γ doesn't converge
-module ElasticityMixedTensor_mixedBCTests
+module ElasticityMixedTensor3D
   using Gridap
   #using GridapMixedViscoelasticityReactionDiffusion
   import Gridap: ∇
@@ -97,7 +97,7 @@ module ElasticityMixedTensor_mixedBCTests
   eσ2h = (row2∘σex)-σh2
   eσ3h = (row3∘σex)-σh3
   euh  = uex-uh
-  eγ1h  = comp2∘row1∘γex-γh1
+  eγ1h  = comp1∘row2∘γex-γh1
   eγ2h  = comp1∘row3∘γex-γh2
   eγ3h  = comp3∘row2∘γex-γh3
  error_σ = sqrt(sum(∫(eσ1h⋅eσ1h+eσ2h⋅eσ2h+eσ3h⋅eσ3h)dΩ +
@@ -151,6 +151,6 @@ module ElasticityMixedTensor_mixedBCTests
 
     println("========================================================================")
   end
-  convergence_test(;nkmax=4,k=0,generate_output=true)
+  convergence_test(;nkmax=3,k=0,generate_output=true)
 end
 

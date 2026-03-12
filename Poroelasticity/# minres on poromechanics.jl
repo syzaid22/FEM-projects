@@ -13,10 +13,10 @@ module PoroelasticityMinRes
     # const ν = 0.479
     # const λ = (E*ν)/((1+ν)*(1-2*ν))
     # const μ = E/(2*(1+ν))
-    const λ = 10
+    const λ = 1
     const μ = 1
     
-    K_component = 1e-1 #2e-11
+    K_component = 1 #2e-11
     K = TensorValue(K_component, 0.0, 0.0, K_component) # this will be variable later...
     Kinv = TensorValue(1/K_component, 0.0, 0.0, 1/K_component) # and so will this.
     const s_0 = 1
@@ -117,7 +117,6 @@ module PoroelasticityMinRes
   F(τ1,τ2,q) =  ∫((τ1⋅n_ΓD)*(comp1∘uex) + (τ2⋅n_ΓD)*(comp2∘uex))dΓD + ∫(gex*q)dΩ 
   G(v,w) = ∫(pex*(w⋅n_ΓD))dΓD - ∫(fex⋅v)dΩ 
 
-  # NOTE: code is only pseudo-working. we don't observe γ convergence so there might be an incorrect implementation.
   lhs((εσ1,εσ2,εp,εu,εγ,εz,σ1,σ2,p,u,γ,z),(τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  a((σ1,σ2,p),(τ1,τ2,q)) + b((τ1,τ2,q),(u,γ,z)) + b((σ1,σ2,p),(v,η,w)) - c(z,w) + a((φσ1,φσ2,φp),(εσ1,εσ2,εp)) + b((φσ1,φσ2,φp),(εu,εγ,εz)) + b((εσ1,εσ2,εp),(φu,φγ,φz)) - c(φz,εz) + d2(εσ1,τ1) + d2(εσ2,τ2) + ∫(εp*q)dΩ + ∫(εu⋅v)dΩ + ∫(2*εγ*η)dΩ + d2(εz,w)
   rhs((τ1,τ2,q,v,η,w,φσ1,φσ2,φp,φu,φγ,φz)) =  F(τ1,τ2,q) + G(v,w)                                                        
 
@@ -137,7 +136,7 @@ module PoroelasticityMinRes
   eσ2h = (row2∘σex)-σh2
   eph = pex-ph
   euh  = uex-uh
-  eγh  = comp2∘row1∘γex-γh
+  eγh  = comp1∘row2∘γex-γh
   ezh = zex-zh
 
   error_σ = sqrt(sum(∫(eσ1h⋅eσ1h+eσ2h⋅eσ2h)dΩ +
@@ -269,7 +268,6 @@ module PoroelasticityMinRes
        @printf("%7d & %.4f & %.2e & %.3f & %.2e & %.3f \n",
                 nn[nk], hh[nk], εp[nk], rεp[nk], εz[nk], rεz[nk]);
     end
-
 
     println("========================================================================")
   end

@@ -1,5 +1,4 @@
 # 3D minres poromechanics
-# needs some work. γ still doesn't converge.
 module PoroelasticityMinRes3D
   using Gridap
   import Gridap: ∇
@@ -15,9 +14,9 @@ module PoroelasticityMinRes3D
     # const λ = (E*ν)/((1+ν)*(1-2*ν))
     # const μ = E/(2*(1+ν))
     const λ = 1
-    const μ = 1
+    const μ = 1000
 
-    K_component = 1.0
+    K_component = 1
     K = TensorValue(K_component, 0.0, 0.0, 0.0, K_component, 0.0, 0.0, 0.0, K_component) # this will be variable later...
     Kinv = TensorValue(1/K_component, 0.0, 0.0, 0.0, 1/K_component, 0.0, 0.0, 0.0, 1/K_component) # and so will this.
     const s_0 = 1#e-3
@@ -146,7 +145,7 @@ module PoroelasticityMinRes3D
   eσ3h = (row3∘σex)-σh3
   eph = pex-ph
   euh  = uex-uh
-  eγ1h  = comp2∘row1∘γex-γh1
+  eγ1h  = comp1∘row2∘γex-γh1
   eγ2h  = comp1∘row3∘γex-γh2
   eγ3h  = comp3∘row2∘γex-γh3
   ezh = zex-zh
@@ -167,8 +166,6 @@ module PoroelasticityMinRes3D
 
   size_εσh,size_εph,size_εuh,size_εγh,size_εzh, error_σ,error_p,error_u,error_γ,error_z, Gridap.FESpaces.num_free_dofs(X)
   end
-
-
 
   function  convergence_test(; nkmax, k=0, generate_output=false)
     eσ   = Float64[]

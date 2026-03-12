@@ -104,7 +104,7 @@ module ElasticityMinRes
   eσ1h = (row1∘σex)-σh1
   eσ2h = (row2∘σex)-σh2
   euh  = uex-uh
-  eγh  = comp2∘row1∘γex-γh
+  eγh  = comp1∘row2∘γex-γh
   error_σ = sqrt(sum(∫(eσ1h⋅eσ1h+eσ2h⋅eσ2h)dΩ +
                      ∫((∇⋅eσ1h)*(∇⋅eσ1h)+(∇⋅eσ2h)*(∇⋅eσ2h))dΩ))
   error_u = sqrt(sum(∫(euh⋅euh)dΩ))

@@ -28,7 +28,7 @@ module PerturbedDarcyMinRes
   reffe_σ = ReferenceFE(bdm,Float64,k+1)
   reffe_γ = ReferenceFE(lagrangian,Float64,k)
 
-  reffe_σ_1 = ReferenceFE(bdm,Float64,k+2)
+  reffe_σ_1 = ReferenceFE(raviart_thomas,Float64,k+1)
   reffe_γ_1 = ReferenceFE(lagrangian,Float64,k+1)
 
   # Numerical integration

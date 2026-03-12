@@ -89,7 +89,7 @@ module ElasticityMixedTensor_mixedBCTests
   eσ1h = (row1∘σex)-σh1
   eσ2h = (row2∘σex)-σh2
   euh  = uex-uh
-  eγh  = comp2∘row1∘γex-γh
+  eγh  = comp1∘row2∘γex-γh
   error_σ = sqrt(sum(∫(eσ1h⋅eσ1h+eσ2h⋅eσ2h)dΩ +
                      ∫((∇⋅eσ1h)*(∇⋅eσ1h)+(∇⋅eσ2h)*(∇⋅eσ2h))dΩ))
   error_u = sqrt(sum(∫(euh⋅euh)dΩ))
@@ -141,5 +141,5 @@ module ElasticityMixedTensor_mixedBCTests
 
     println("========================================================================")
   end
-  convergence_test(;nkmax=6,k=0,generate_output=true)
+  convergence_test(;nkmax=4,k=0,generate_output=true)
 end

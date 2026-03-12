@@ -4,7 +4,7 @@ end
 
 # 2D domain
 function extract_row2d(row)
-    return x -> VectorValue(x[1,row],x[2,row]) 
+    return x -> VectorValue(x[row,1],x[row,2]) 
 end
   
 function generate_model_unit_square(nk)
@@ -23,7 +23,7 @@ end
 
 # 3D domain
 function extract_row3d(row)
-    return x -> VectorValue(x[1,row],x[2,row],x[3,row])
+    return x -> VectorValue(x[row,1],x[row,2],x[row,3])
 end
 
 function generate_model_unit_cube(nk)
