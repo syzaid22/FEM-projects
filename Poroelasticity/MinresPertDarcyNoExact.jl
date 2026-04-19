@@ -21,7 +21,8 @@ module PerturbedDarcyMinRes
 
   fex(x) = VectorValue(1.0,1.0)
   gex(x) = 1.0
-  pex(x)  = 0.0    # this is how we deal with no exact p? 
+  pex  = 0.0    # this is how we deal with no exact p?
+  zex(x) = VectorValue(0.1*sin(x[1]),0.1*cos(x[2])) 
 
   function solve_darcy(model; k = k, generate_output=false)
 
@@ -52,7 +53,7 @@ module PerturbedDarcyMinRes
   Gh_1 = TestFESpace(model,reffe_γ_1,conformity=:L2)
 
   Ph = TrialFESpace(Gh_)
-  Zh = TrialFESpace(Sh_) # when using no exact solutions, how do we define the essential BC here?
+  Zh = TrialFESpace(Sh_,zex) # when using no exact solutions, how do we define the essential BC here?
 
   rPh = TrialFESpace(Gh_1)
   rZh = TrialFESpace(Sh_1)
@@ -92,7 +93,7 @@ module PerturbedDarcyMinRes
   #           cellfields=["σ1"=>σh1,"σ2"=>σh2, "p"=>ph,  "u"=>uh, "γ"=>γh, "z"=>zh])
   #     writevtk(model,"poroelasticity_output/model")
   # end
-   εph, εzh, ph, zh, rPh, rZh, Ph, Zh, dΩ, dΓD, Gridap.FESpaces.num_free_dofs(X)
+   εph, εzh, ph, zh, rPh, rZh, Ph, Zh, dΩ, Gridap.FESpaces.num_free_dofs(X)
   end
 
 
@@ -119,14 +120,14 @@ module PerturbedDarcyMinRes
 
     modelfine = generate_model_unit_square(nkmax+1)
     setup_model_labels_unit_square!(modelfine)
-    εpref,εzref,pref,zref,_,_,_,_,_,_,_= solve_darcy(modelfine; k=k, generate_output=false)
+    εpref,εzref,pref,zref,_,_,_,_,_,_= solve_darcy(modelfine; k=k, generate_output=false)
 
     for nk in 1:nkmax
        println("******** Refinement step: $nk")
        model=generate_model_unit_square(nk) # Discrete model
        setup_model_labels_unit_square!(model)
       
-       εph, εzh, ph, zh, rPh, rZh, Ph, Zh, dΩ, dΓD, ndofs=solve_darcy(model; k=k, generate_output=generate_output)
+       εph, εzh, ph, zh, rPh, rZh, Ph, Zh, dΩ, ndofs=solve_darcy(model; k=k, generate_output=generate_output)
 
        pr_ = Interpolable(pref)
        zr_ = Interpolable(zref)
