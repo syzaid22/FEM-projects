@@ -81,7 +81,7 @@
     hh   = Float64[]
 
     modelfine = generate_model_unit_square(nkmax+3)
-    setup_model_labels_unit_square!(modelfine)
+    setup_model_labels_mixed!(modelfine)
     pref,zref,_,_,_,_= solve_darcy(modelfine; k=k, generate_output=false)
 
     for nk in 1:nkmax
