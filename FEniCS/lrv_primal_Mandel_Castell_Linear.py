@@ -33,7 +33,6 @@ ffc_options = {"optimize": True, \
 
 
 eps = lambda v: sym(grad(v))
-kappa = lambda d,p: kap0#*5*exp(30*(c0*p+alpha*tr(d)))  
 
 mesh = UnitSquareMesh(40,40)
 n = FacetNormal(mesh)
@@ -56,7 +55,7 @@ mu = E/(2*(1+nu))
 lmbda = E*nu/((1+nu)*(1-2*nu))
               
 c0    = Constant(4.0e-10) # 1/Pa
-kap0  = Constant(5.1e-8) # m^2
+kappa = Constant(5.1e-8) # m^2
 alpha = Constant(0.9)     # Biot-Willis
 muf   = Constant(1.e-3)  # Pa.s
 rho   = Constant(1.)      # kg/m^3
@@ -72,9 +71,7 @@ Qh = FiniteElement("CG", mesh.ufl_cell(), 1)
 Hh = FunctionSpace(mesh,MixedElement([Vh,Qh]))
 
 Sol = Function(Hh);
-dSol = TrialFunction(Hh)
-#u, p = TrialFunctions(Hh)
-u, p = split(Sol) 
+u, p = TrialFunctions(Hh)
 v, q = TestFunctions(Hh)
 
 uold   = Function(Hh.sub(0).collapse())
@@ -89,7 +86,6 @@ fileO.parameters["flush_output"] = True
 
 bcU1 = DirichletBC(Hh.sub(0).sub(0), Constant(0), bdry, left)
 bcU2 = DirichletBC(Hh.sub(0).sub(1), Constant(0), bdry, bot)
-#bcU3 = DirichletBC(Hh.sub(0).sub(1), Constant(-1), bdry, top)
 bcP = DirichletBC(Hh.sub(1), Constant(0), bdry, right)
 bcs = [bcU1,bcU2,bcP]
 
@@ -97,31 +93,20 @@ PLeft = 2*mu*inner(eps(u),eps(v)) * dx \
     + lmbda*div(u)*div(v) * dx \
     - alpha*p*div(v) * dx \
     + 1./dt*(c0*p + alpha*div(u))*q*dx \
-    + dot(kappa(eps(u),p)/muf*grad(p),grad(q)) * dx
+    + dot(kappa/muf*grad(p),grad(q)) * dx
 
 PRight = dot(rho*ff,v)*dx \
     + 1./dt*(c0*pold + alpha*div(uold))*q*dx \
     + dot(tract,v)*ds(top)
 
 
-FF = PLeft - PRight
-Tang = derivative(FF,Sol,dSol)
-problem = NonlinearVariationalProblem(FF, Sol, bcs, J=Tang)
-solver  = NonlinearVariationalSolver(problem)
-solver.parameters['nonlinear_solver']                    = 'newton'
-solver.parameters['newton_solver']['linear_solver']      = 'mumps'
-solver.parameters["newton_solver"]["convergence_criterion"] = 'incremental'
-solver.parameters['newton_solver']['maximum_iterations'] = 10
-
-
 while (inc <= 100):
     
     print("t=%.3f" % t)
     
-    solver.solve()
+    solve(PLeft == PRight, Sol, bcs)
     u_h,p_h = Sol.split()
 
-    #if (inc <= 50 or inc == 60 or inc == 80 or inc == 100):
     u_h.rename("u","u"); fileO.write(u_h, t)
     p_h.rename("p","p"); fileO.write(p_h, t)
         
